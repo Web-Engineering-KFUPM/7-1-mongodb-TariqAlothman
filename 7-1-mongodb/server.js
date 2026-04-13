@@ -184,21 +184,62 @@
  *  This is the default behavior of Mongoose.
  */
 
-// import mongoose
+import mongoose from "mongoose";
 
-// establish connection
+const mongoUri =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://HasanDB:<db_password>@cluster0.rygtjue.mongodb.net/TestDB";
 
+if (mongoUri.includes("<db_password>")) {
+  console.log(
+    "Set MONGODB_URI to your MongoDB Atlas connection string before running server.js"
+  );
+  process.exit(1);
+}
 
-// define schema
+await mongoose.connect(mongoUri);
+console.log("Connected to MongoDB");
 
+const studentSchema = new mongoose.Schema({
+  name: String,
+  age: Number,
+  major: String,
+});
 
-// create document
+const Student = mongoose.model("Student", studentSchema);
 
+async function createStudents() {
+  await Student.insertMany([
+    { name: "Ali", age: 21, major: "CS" },
+    { name: "Sara", age: 23, major: "SE" },
+  ]);
+  console.log("Inserted students");
+}
 
-// read document
+async function readStudents() {
+  const all = await Student.find();
+  console.log(all);
+}
 
+async function updateStudent() {
+  await Student.updateOne({ name: "Ali" }, { age: 22 });
+  console.log("Updated Ali");
+}
 
-// update document
+async function deleteStudent() {
+  await Student.deleteOne({ name: "Sara" });
+  console.log("Deleted Sara");
+}
 
-
-// delete document
+try {
+  await createStudents();
+  await readStudents();
+  await updateStudent();
+  await deleteStudent();
+  await readStudents();
+} catch (error) {
+  console.error("MongoDB operation failed:", error.message);
+} finally {
+  await mongoose.connection.close();
+  console.log("Connection closed");
+}
